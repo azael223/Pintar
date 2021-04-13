@@ -1,0 +1,22 @@
+.toolbar{
+  display: flex;
+  background-color: #242526;
+  border-bottom: 1px solid #b0b3b8;
+  padding: 10px 10px;
+  gap: 6px;
+  align-items: center;
+  .toolbar-item{
+    color: white;
+    border: none;
+    height: 36px;
+    width: 36px;
+    border-radius: 6px;
+    background-color: transparent;
+    font-size: 18px;
+    cursor: pointer;
+    transition: all 0.3s;
+    &:hover{
+      background-color: #616161;
+    }
+  }
+}
