@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { ToolsManagerService } from 'src/app/services/tools-manager.service';
 
 @Component({
   selector: 'app-toolbar',
@@ -9,7 +10,7 @@ import { takeUntil } from 'rxjs/operators';
   styleUrls: ['./toolbar.component.scss'],
 })
 export class ToolbarComponent implements OnInit {
-  constructor() {}
+  constructor(private _tm: ToolsManagerService) {}
 
   public onDestroy = new Subject<any>();
 
@@ -22,6 +23,6 @@ export class ToolbarComponent implements OnInit {
   setListeners() {
     this.colorControl.valueChanges
       .pipe(takeUntil(this.onDestroy))
-      .subscribe((value) => console.log(value));
+      .subscribe((value) => (this._tm.Color.set(value)));
   }
 }
