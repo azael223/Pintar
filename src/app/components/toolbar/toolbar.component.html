@@ -1,40 +1,64 @@
 <div class="toolbar">
   <!-- SAVE -->
-  <button class="toolbar-item">
+  <button class="toolbar-item" [matTooltip]="'Guardar'">
     <i class="far fa-save"></i>
   </button>
   <!-- OPEN -->
-  <button class="toolbar-item">
+  <button class="toolbar-item" [matTooltip]="'Abrir'">
     <i class="far fa-folder"></i>
   </button>
   <!-- SELECT -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Seleccionar'"
+    (click)="changeToolType('select')"
+  >
     <i class="fas fa-vector-square"></i>
   </button>
   <!-- PENCIL -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Lápiz'"
+    (click)="changeToolType('pencil')"
+  >
     <i class="fas fa-pencil-alt"></i>
   </button>
   <!-- ERASER -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Borrador'"
+    (click)="changeToolType('eraser')"
+  >
     <i class="fas fa-eraser"></i>
   </button>
   <!-- FILL -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Rellenar'"
+    (click)="changeToolType('fill')"
+  >
     <i class="fas fa-fill-drip"></i>
   </button>
   <!-- SHAPES -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Figuras'"
+    (click)="changeToolType('shape')"
+  >
     <i class="fas fa-shapes"></i>
   </button>
   <!-- TEXT -->
-  <button class="toolbar-item">
+  <button
+    class="toolbar-item"
+    [matTooltip]="'Texto'"
+    (click)="changeToolType('text')"
+  >
     <i class="fas fa-font"></i>
   </button>
   <!-- COLOR 1 -->
   <!-- COLOR 2 -->
   <!-- COLORS -->
-  <div class="colors">
-    <input type="color" [formControl]="colorControl">
+  <div class="colors" [matTooltip]="'Colores'">
+    <input type="color" [formControl]="colorControl" />
   </div>
 </div>

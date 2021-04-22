@@ -14,13 +14,13 @@ export class HistorialService {
     return JSON.parse(localStorage.getItem(this.HISTORIAL_KEY))[index];
   }
 
-  addTrazo(trazo: Stroke) {
+  addTrazo(stroke: Stroke) {
     if (this.checkHistorial()) {
       this.updateHistorial(
-        JSON.parse(localStorage.getItem(this.HISTORIAL_KEY)).trazos.push(trazo)
+        JSON.parse(localStorage.getItem(this.HISTORIAL_KEY)).trazos.push(stroke)
       );
     } else {
-      this.updateHistorial({ trazos: [trazo] });
+      this.updateHistorial({ strokes: [stroke] });
     }
   }
 
@@ -29,7 +29,10 @@ export class HistorialService {
       let historial: Historial = JSON.parse(
         localStorage.getItem(this.HISTORIAL_KEY)
       );
-      historial.trazos = historial.trazos.slice(historial.trazos.length - 1, 1);
+      historial.strokes = historial.strokes.slice(
+        historial.strokes.length - 1,
+        1
+      );
       this.updateHistorial(historial);
     }
   }
@@ -39,9 +42,13 @@ export class HistorialService {
   }
 
   private checkHistorial() {
-    const historial: Historial = JSON.parse(
-      localStorage.getItem(this.HISTORIAL_KEY)
-    );
-    return historial && historial.trazos && historial.trazos.length > 0;
+    try {
+      const historial: Historial = JSON.parse(
+        localStorage.getItem(this.HISTORIAL_KEY)
+      );
+      return historial && historial.strokes && historial.strokes.length > 0;
+    } catch (err) {
+      return false;
+    }
   }
 }

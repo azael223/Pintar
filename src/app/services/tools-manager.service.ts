@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
+import { ToolType } from '../models/toolType';
 
 @Injectable({
   providedIn: 'root',
@@ -9,6 +10,7 @@ export class ToolsManagerService {
 
   private _color: string;
   private _height: number;
+  private _toolType: keyof typeof ToolType;
 
   public Color = {
     get: () => this._color,
@@ -25,6 +27,15 @@ export class ToolsManagerService {
     set: (height: number) => {
       this._height = height;
       this.Height.onChange.next(height);
+    },
+  };
+
+  public ToolType = {
+    get: () => this._toolType,
+    onChange: new Subject<keyof typeof ToolType>(),
+    set: (type: keyof typeof ToolType) => {
+      this._toolType = type;
+      this.ToolType.onChange.next(type);
     },
   };
 }

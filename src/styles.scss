@@ -5,3 +5,38 @@ html, body{
   margin: 0;
   padding: 0;
 }
+
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+
+.pencil{
+  cursor: url("/assets/icons/pencil-alt.svg") 16 16, auto;
+}
+
+.eraser{
+  cursor: url("/assets/icons/eraser.svg") 16 16, auto;
+}
+
+.fill{
+  cursor: url("/assets/icons/fill-drip.svg") 16 16, auto;
+}
+
+.text{
+  cursor: text;
+}
+
+.select{
+  cursor: crosshair;
+}
+
+.shape{
+  cursor: crosshair;
+}
+
+.line{
+  cursor: crosshair;
+}
+.curve{
+  cursor: crosshair;
+}
