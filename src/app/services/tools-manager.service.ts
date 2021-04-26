@@ -11,6 +11,7 @@ export class ToolsManagerService {
   private _color: string;
   private _color2: string;
   private _height: number;
+  private _width: number;
   private _toolType: keyof typeof ToolType;
 
   public Color = {
@@ -37,6 +38,15 @@ export class ToolsManagerService {
     set: (height: number) => {
       this._height = height;
       this.Height.onChange.next(height);
+    },
+  };
+
+  public Width = {
+    get: () => this._width,
+    onChange: new Subject<number>(),
+    set: (width: number) => {
+      this._width = width;
+      this.Width.onChange.next(width);
     },
   };
 

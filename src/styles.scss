@@ -1,43 +1,48 @@
 /* You can add global styles to this file, and also import other style files */
 
-html, body{
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
-
-
-.pencil{
-  cursor: url("/assets/icons/pencil-alt.svg") 16 16, auto;
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-.eraser{
-  cursor: url("/assets/icons/eraser.svg") 16 16, auto;
-}
-
-.fill{
+.pencil {
   cursor: crosshair;
-
 }
 
-.text{
+.eraser {
+  cursor: black 20, 20;
+}
+
+.fill {
+  cursor: crosshair;
+}
+
+.text {
   cursor: text;
 }
 
-.select{
+.select {
   cursor: crosshair;
 }
 
-.shape{
+.shape {
   cursor: crosshair;
 }
 
-.line{
+.line {
   cursor: crosshair;
 }
-.curve{
+.curve {
   cursor: crosshair;
 }

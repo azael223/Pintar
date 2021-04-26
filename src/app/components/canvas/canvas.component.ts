@@ -43,6 +43,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   public drawing = false;
   public event: string;
   public axes: Axes;
+  public dimensions = { width: 1920, height: 1080 };
+  public width = 10;
+  public pixelColor = '#000000';
 
   ngOnInit(): void {
     this.initToolListeners();
@@ -58,9 +61,16 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   initCanvas() {
-    this.canvas.nativeElement.width = 1920;
-    this.canvas.nativeElement.height = 1080;
+    this.canvas.nativeElement.width = this.dimensions.width;
+    this.canvas.nativeElement.height = this.dimensions.height;
     this.ctx = this.canvas.nativeElement.getContext('2d');
+    this.ctx.fillStyle = 'white';
+    this.ctx.fillRect(0, 0, this.dimensions.width, this.dimensions.height);
+    this.ctx.fillStyle = 'red';
+    this.ctx.fillRect(0, 0, 200, 500);
+    this.ctx.fillStyle = 'black';
+    this.ctx.fillRect(300, 500, 200, 500);
+
     this.canvas.nativeElement.addEventListener('keydown', (evt) => {
       // this.event = 'keydown';
       // this.DrawType[this.type]();
@@ -90,12 +100,18 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         this.draw();
       }
     });
+    this.canvas.nativeElement.addEventListener('click', (evt) => {
+      this.event = 'click';
+      this.axes = { x: evt.clientX, y: evt.clientY };
+      this.draw();
+    });
   }
 
   initToolListeners() {
     this._tm.Color.onChange.subscribe((color) => {
       this.color = color;
       this.ctx.strokeStyle = color;
+      this.ctx.fillStyle = color;
     });
 
     this._tm.Color2.onChange.subscribe((color) => {
@@ -110,10 +126,19 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._tm.Height.onChange.subscribe((height) => {
       this.height = height;
     });
+
+    this._tm.Width.onChange.subscribe((width) => {
+      this.width = width;
+    });
   }
 
   private draw() {
-    console.log(this.type);
+    let ClientRect = this.canvas.nativeElement.getBoundingClientRect();
+    this.axes = {
+      x: Math.round(this.axes.x - ClientRect.left),
+      y: Math.round(this.axes.y - ClientRect.top),
+    };
+    console.log(this.axes);
     switch (this.type) {
       case 'pencil':
         this.drawPencil();
@@ -138,13 +163,8 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         // this._historial.addTrazo(drawData.stroke);
         break;
       case 'mousemove':
-        let ClientRect = this.canvas.nativeElement.getBoundingClientRect();
-        let m = {
-          x: Math.round(this.axes.x - ClientRect.left),
-          y: Math.round(this.axes.y - ClientRect.top),
-        };
         // this.stroke.areaAxes.push(m);
-        this.ctx.lineTo(m.x, m.y);
+        this.ctx.lineTo(this.axes.x, this.axes.y);
         this.ctx.lineWidth = this.height;
         this.ctx.stroke();
 
@@ -159,7 +179,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawShape(drawData: Draw) {}
 
   private drawText(drawData: Draw) {
-    console.log(drawData);
     switch (drawData.event) {
       case 'mousedown':
         this.index++;
@@ -191,9 +210,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.event) {
       case 'mousedown':
         this.index++;
-        this.ctx.beginPath();
-
-        // this.boundaryFill(this.axes.x, this.axes.y, this.color, this.color);
+        let pixelColor = this.getPixelColor(this.axes.x, this.axes.y);
+        this.ctx.fillStyle = this.color;
+        this.boundaryFill(this.axes.x, this.axes.y, pixelColor, this.color);
         this.drawing = false;
         break;
     }
@@ -202,25 +221,26 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   private boundaryFill(
     x: number,
     y: number,
-    fillColor: string,
-    boundaryColor: string
+    prevColor: string,
+    newColor: string
   ) {
-    let pixel = this.ctx.getImageData(10, 10, 1, 1).data;
-    console.log(pixel);
-    let pixelColor = `#${this.rgbToHex(pixel[0], pixel[1], pixel[2])}`;
-    console.log(pixelColor);
-    if (pixelColor !== fillColor && pixelColor !== boundaryColor) {
-      this.ctx.fillStyle = this.color
+    let pixelColor = this.getPixelColor(x, y);
+    if (pixelColor == prevColor) {
       this.ctx.fillRect(x, y, 1, 1);
-      this.boundaryFill(x + 1, y, fillColor, boundaryColor);
-      this.boundaryFill(x, y + 1, fillColor, boundaryColor);
-      this.boundaryFill(x - 1, y, fillColor, boundaryColor);
-      this.boundaryFill(x, y - 1, fillColor, boundaryColor);
-      this.boundaryFill(x - 1, y - 1, fillColor, boundaryColor);
-      this.boundaryFill(x - 1, y + 1, fillColor, boundaryColor);
-      this.boundaryFill(x + 1, y - 1, fillColor, boundaryColor);
-      this.boundaryFill(x + 1, y + 1, fillColor, boundaryColor);
+      this.boundaryFill(x + 1, y, prevColor, newColor);
+      this.boundaryFill(x - 1, y, prevColor, newColor);
+      this.boundaryFill(x, y - 1, prevColor, newColor);
+      this.boundaryFill(x, y + 1, prevColor, newColor);
+      this.boundaryFill(x - 1, y - 1, prevColor, newColor);
+      this.boundaryFill(x - 1, y + 1, prevColor, newColor);
+      this.boundaryFill(x + 1, y - 1, prevColor, newColor);
+      this.boundaryFill(x + 1, y + 1, prevColor, newColor);
     }
+  }
+
+  private getPixelColor(x: number, y: number) {
+    let pixel = this.ctx.getImageData(x, y, 1, 1).data;
+    return `#${this.rgbToHex(pixel[0], pixel[1], pixel[2])}`;
   }
 
   private rgbToHex(r: number, g: number, b: number) {
@@ -238,23 +258,31 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.event) {
       case 'mousedown':
         this.index++;
-        this.ctx.beginPath();
         break;
       case 'mouseup':
         // this._historial.addTrazo(drawData.stroke);
         break;
-      case 'mousemove':
-        let ClientRect = this.canvas.nativeElement.getBoundingClientRect();
-        let m = {
-          x: Math.round(this.axes.x - ClientRect.left),
-          y: Math.round(this.axes.y - ClientRect.top),
-        };
+      case 'click':
+        this.drawing = false;
         // this.stroke.areaAxes.push(m);
-        this.ctx.lineTo(m.x, m.y);
-        this.ctx.strokeStyle = this.color2;
-        this.ctx.lineWidth = this.height;
-        this.ctx.stroke();
+        this.ctx.fillStyle = this.color2;
+        this.ctx.fillRect(
+          this.axes.x - this.width / 2,
+          this.axes.y - this.width / 2,
+          this.width,
+          this.width
+        );
         break;
+      case 'mousemove':
+        this.ctx.fillStyle = this.color2;
+        this.ctx.fillRect(
+          this.axes.x - this.width / 2,
+          this.axes.y - this.width / 2,
+          this.width,
+          this.width
+        );
+        break;
+
       case 'mouseout':
         // this._historial.addTrazo(drawData.stroke);
         break;
