@@ -58,7 +58,15 @@
   <!-- COLOR 1 -->
   <!-- COLOR 2 -->
   <!-- COLORS -->
-  <div class="colors" [matTooltip]="'Colores'">
+  <div class="colors" [matTooltip]="'Color 1'">
     <input type="color" [formControl]="colorControl" />
+  </div>
+
+  <div class="colors" [matTooltip]="'Color 2'">
+    <input type="color" [formControl]="color2Control" />
+  </div>
+
+  <div class="height" [matTooltip]="'Tamaño'">
+    <input type="number" [formControl]="heightControl" minlength="1" />
   </div>
 </div>

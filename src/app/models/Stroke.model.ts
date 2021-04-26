@@ -1,4 +1,4 @@
-import { ToolType } from "./toolType";
+import { ToolType } from './toolType';
 
 export interface Stroke {
   type: keyof typeof ToolType;
@@ -7,4 +7,5 @@ export interface Stroke {
   height: number;
   color: string;
   positionAxes?: { x: number; y: number };
+  text?: string;
 }

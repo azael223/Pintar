@@ -15,7 +15,9 @@ export class ToolbarComponent implements OnInit {
 
   public onDestroy = new Subject<any>();
 
-  public colorControl = new FormControl();
+  public colorControl = new FormControl({ value: '#000000', disabled: false });
+  public color2Control = new FormControl({ value: '#ffffff', disabled: false });
+  public heightControl = new FormControl({ value: 1, disabled: false });
 
   ngOnInit(): void {
     this.setListeners();
@@ -29,5 +31,15 @@ export class ToolbarComponent implements OnInit {
     this.colorControl.valueChanges
       .pipe(takeUntil(this.onDestroy))
       .subscribe((value) => this._tm.Color.set(value));
+
+    this.color2Control.valueChanges
+      .pipe(takeUntil(this.onDestroy))
+      .subscribe((value) => this._tm.Color2.set(value));
+
+    this.heightControl.valueChanges
+      .pipe(takeUntil(this.onDestroy))
+      .subscribe((height) => {
+        this._tm.Height.set(height);
+      });
   }
 }
