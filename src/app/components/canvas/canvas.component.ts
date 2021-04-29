@@ -7,6 +7,7 @@ import {
   Type,
   ViewChild,
 } from '@angular/core';
+import { FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ToolType } from 'src/app/models/toolType';
@@ -43,11 +44,13 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   public drawing = false;
   public event: string;
   public axes: Axes;
-  public prevAxes: Axes;
-  public dimensions = { width: 1920, height: 1080 };
+  public textAxes: Axes = { x: 0, y: 0 };
+  public prevAxes: Axes = { x: 0, y: 0 };
+  public dimensions = { width: 720, height: 480 };
   public width = 10;
   public pixelColor = '#000000';
   public data: ImageData[] = [];
+  public text = new FormControl('', []);
 
   public prevData: {
     axes: { x: number; y: number };
@@ -76,38 +79,31 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this.dataHandler();
 
     this.canvas.nativeElement.addEventListener('keydown', (evt) => {
-      // this.event = 'keydown';
-      // this.DrawType[this.type]();
+      this.event = 'keydown';
+      this.draw();
     });
     this.canvas.nativeElement.addEventListener('mousedown', (evt) => {
-      this.drawing = true;
       this.event = 'mousedown';
       this.axes = { x: evt.clientX, y: evt.clientY };
       this.draw();
     });
     this.canvas.nativeElement.addEventListener('mouseup', (evt) => {
-      this.drawing = false;
       this.event = 'mouseup';
       this.axes = { x: evt.clientX, y: evt.clientY };
       this.draw();
     });
     this.canvas.nativeElement.addEventListener('mousemove', (evt) => {
+      this.event = 'mousemove';
       if (this.drawing) {
-        this.event = 'mousemove';
         this.axes = { x: evt.clientX, y: evt.clientY };
-        this.draw();
       }
+      this.draw();
     });
-    // this.canvas.nativeElement.addEventListener('click', (evt) => {
-    //   this.drawing = true;
-    //   this.event = 'click';
-    //   this.axes = { x: evt.clientX, y: evt.clientY };
-    //   this.draw();
-    // });
   }
 
   initToolListeners() {
     this._tm.Color.onChange.subscribe((color) => {
+      this.drawing = false;
       this.color = color;
       this.ctx.strokeStyle = color;
       this.ctx.fillStyle = color;
@@ -115,26 +111,32 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this._tm.Color2.onChange.subscribe((color) => {
       this.color2 = color;
+      this.drawing = false;
     });
 
     this._tm.ToolType.onChange.subscribe((type) => {
       this.cursor = type;
       this.type = type;
+      this.drawing = false;
     });
 
     this._tm.Height.onChange.subscribe((height) => {
       this.height = height;
+      this.drawing = false;
     });
 
     this._tm.Width.onChange.subscribe((width) => {
       this.width = width;
+      this.drawing = false;
     });
 
     this._tm.Undo.onChange.subscribe((value) => {
+      this.drawing = false;
       this.undo();
     });
 
     this._tm.Redo.onChange.subscribe((value) => {
+      this.drawing = false;
       this.dataHandler(true);
     });
   }
@@ -158,6 +160,8 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       case 'line':
         this.drawLine();
         break;
+      case 'text':
+        this.drawText();
     }
   }
 
@@ -165,46 +169,53 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawPencil() {
     switch (this.event) {
       case 'mousedown':
+        this.drawing = true;
         this.index++;
         this.ctx.beginPath();
-        break;
-      case 'mouseup':
-        this.dataHandler();
-        // this._historial.addTrazo(drawData.stroke);
-        break;
-      case 'mousemove':
-        // this.stroke.areaAxes.push(m);
         this.ctx.lineTo(this.axes.x, this.axes.y);
         this.ctx.lineWidth = this.height;
         this.ctx.stroke();
-
         break;
-      case 'click':
+      case 'mouseup':
+        this.drawing = false;
+        this.dataHandler();
+        break;
+      case 'mousemove':
+        if (this.drawing) {
+          this.ctx.lineTo(this.axes.x, this.axes.y);
+          this.ctx.lineWidth = this.height;
+          this.ctx.stroke();
+        }
         break;
     }
   }
   private drawShape(drawData: Draw) {}
 
-  private drawText(drawData: Draw) {
-    switch (drawData.event) {
+  private drawText() {
+    switch (this.event) {
       case 'mousedown':
         this.index++;
-        drawData.ctx.beginPath();
+        this.textAxes = this.axes;
+        if (this.drawing) {
+          console.log(this.text.value);
+          this.dataHandler();
+          this.text.setValue('');
+          this.drawing = false;
+        } else if (!this.drawing) {
+          this.drawing = true;
+          document.getElementById('text').focus();
+        }
         break;
       case 'mouseup':
-        // this._historial.addTrazo(drawData.stroke);
         break;
       case 'keydown':
-        drawData.ctx.font = '16px Arial';
-        // this.stroke.areaAxes.push(m);
-        drawData.ctx.strokeStyle = drawData.stroke.color;
-        drawData.ctx.fillText('test', 50, 50);
-
+        if (this.drawing) {
+          // this.ctx.font = '16px Arial';
+          // this.ctx.fillStyle = this.color;
+          // this.ctx.fillText("test /n", this.textAxes.x, this.textAxes.y);
+        }
         break;
       case 'mouseout':
-        // this._historial.addTrazo(drawData.stroke);
-        break;
-      case 'click':
         break;
     }
   }
@@ -212,15 +223,22 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   private drawLine() {
     switch (this.event) {
       case 'mousedown':
+        this.drawing = true;
         this.index++;
         this.prevAxes = this.axes;
-        break;
-      case 'mousemove':
         this.resetPixels();
         this.dda();
         break;
+      case 'mousemove':
+        if (this.drawing) {
+          this.resetPixels();
+          this.dda();
+        }
+        break;
       case 'mouseup':
         this.dda();
+        this.dataHandler();
+        this.drawing = false;
         break;
     }
   }
@@ -272,7 +290,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         let pixelColor = this.getPixelColor(this.axes.x, this.axes.y, 1)[0];
         this.ctx.fillStyle = this.color;
         this.boundaryFill(this.axes.x, this.axes.y, pixelColor, this.color);
-        this.drawing = false;
         break;
     }
   }
@@ -344,35 +361,37 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.event) {
       case 'mousedown':
         this.index++;
+        this.drawing = true;
+        this.ctx.fillStyle = this.color2;
+        this.ctx.fillRect(
+          this.axes.x - this.width / 2,
+          this.axes.y - this.width / 2,
+          this.width,
+          this.width
+        );
         break;
       case 'mouseup':
-        // this._historial.addTrazo(drawData.stroke);
-        break;
-      case 'click':
-        this.drawing = false;
-        // this.stroke.areaAxes.push(m);
-        this.ctx.fillStyle = this.color2;
         this.ctx.fillRect(
           this.axes.x - this.width / 2,
           this.axes.y - this.width / 2,
           this.width,
           this.width
         );
+        this.dataHandler();
+        this.drawing = false;
         break;
       case 'mousemove':
-        this.ctx.fillStyle = this.color2;
-        this.ctx.fillRect(
-          this.axes.x - this.width / 2,
-          this.axes.y - this.width / 2,
-          this.width,
-          this.width
-        );
+        if (this.drawing) {
+          this.ctx.fillRect(
+            this.axes.x - this.width / 2,
+            this.axes.y - this.width / 2,
+            this.width,
+            this.width
+          );
+        }
         break;
-
       case 'mouseout':
         // this._historial.addTrazo(drawData.stroke);
-        break;
-      case 'click':
         break;
     }
   }
@@ -383,11 +402,11 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private dataHandler(redo?: boolean) {
     if (redo) {
-      if(this.currentIndex < this.data.length-1){
+      if (this.currentIndex < this.data.length - 1) {
         this.ctx.putImageData(this.data[++this.currentIndex], 0, 0);
       }
     } else {
-      if (this.currentIndex < this.data.length-1) {
+      if (this.currentIndex < this.data.length - 1) {
         this.data.splice(
           this.currentIndex + 1,
           this.data.length - 1 - this.currentIndex
