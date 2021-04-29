@@ -32,7 +32,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   ) {}
 
   private onDestroy = new Subject<any>();
-
+  public currentIndex = -1;
   public index = 0;
   public color = '#000000';
   public color2 = '#ffffff';
@@ -43,9 +43,16 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   public drawing = false;
   public event: string;
   public axes: Axes;
+  public prevAxes: Axes;
   public dimensions = { width: 1920, height: 1080 };
   public width = 10;
   public pixelColor = '#000000';
+  public data: ImageData[] = [];
+
+  public prevData: {
+    axes: { x: number; y: number };
+    imageData: ImageData;
+  }[] = [];
 
   ngOnInit(): void {
     this.initToolListeners();
@@ -66,10 +73,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this.ctx = this.canvas.nativeElement.getContext('2d');
     this.ctx.fillStyle = 'white';
     this.ctx.fillRect(0, 0, this.dimensions.width, this.dimensions.height);
-    this.ctx.fillStyle = 'red';
-    this.ctx.fillRect(0, 0, 200, 500);
-    this.ctx.fillStyle = 'black';
-    this.ctx.fillRect(300, 500, 200, 500);
+    this.dataHandler();
 
     this.canvas.nativeElement.addEventListener('keydown', (evt) => {
       // this.event = 'keydown';
@@ -87,12 +91,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       this.axes = { x: evt.clientX, y: evt.clientY };
       this.draw();
     });
-    this.canvas.nativeElement.addEventListener('mouseout', (evt) => {
-      this.drawing = false;
-      this.event = 'mouseout';
-      this.axes = { x: evt.clientX, y: evt.clientY };
-      this.draw();
-    });
     this.canvas.nativeElement.addEventListener('mousemove', (evt) => {
       if (this.drawing) {
         this.event = 'mousemove';
@@ -100,11 +98,12 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         this.draw();
       }
     });
-    this.canvas.nativeElement.addEventListener('click', (evt) => {
-      this.event = 'click';
-      this.axes = { x: evt.clientX, y: evt.clientY };
-      this.draw();
-    });
+    // this.canvas.nativeElement.addEventListener('click', (evt) => {
+    //   this.drawing = true;
+    //   this.event = 'click';
+    //   this.axes = { x: evt.clientX, y: evt.clientY };
+    //   this.draw();
+    // });
   }
 
   initToolListeners() {
@@ -130,6 +129,14 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this._tm.Width.onChange.subscribe((width) => {
       this.width = width;
     });
+
+    this._tm.Undo.onChange.subscribe((value) => {
+      this.undo();
+    });
+
+    this._tm.Redo.onChange.subscribe((value) => {
+      this.dataHandler(true);
+    });
   }
 
   private draw() {
@@ -138,7 +145,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
       x: Math.round(this.axes.x - ClientRect.left),
       y: Math.round(this.axes.y - ClientRect.top),
     };
-    console.log(this.axes);
     switch (this.type) {
       case 'pencil':
         this.drawPencil();
@@ -148,6 +154,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
       case 'fill':
         this.drawFill();
+        break;
+      case 'line':
+        this.drawLine();
         break;
     }
   }
@@ -160,6 +169,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         this.ctx.beginPath();
         break;
       case 'mouseup':
+        this.dataHandler();
         // this._historial.addTrazo(drawData.stroke);
         break;
       case 'mousemove':
@@ -168,9 +178,6 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         this.ctx.lineWidth = this.height;
         this.ctx.stroke();
 
-        break;
-      case 'mouseout':
-        // this._historial.addTrazo(drawData.stroke);
         break;
       case 'click':
         break;
@@ -202,7 +209,59 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private drawLine(drawData: Draw) {}
+  private drawLine() {
+    switch (this.event) {
+      case 'mousedown':
+        this.index++;
+        this.prevAxes = this.axes;
+        break;
+      case 'mousemove':
+        this.resetPixels();
+        this.dda();
+        break;
+      case 'mouseup':
+        this.dda();
+        break;
+    }
+  }
+
+  private dda() {
+    this.ctx.fillStyle = this.color;
+    let dx = this.axes.x - this.prevAxes.x;
+    let dy = this.axes.y - this.prevAxes.y;
+    let steps = Math.abs(dx) > Math.abs(dy) ? Math.abs(dx) : Math.abs(dy);
+    let axesInc = { x: dx / steps, y: dy / steps };
+    let axes = { x: this.prevAxes.x, y: this.prevAxes.y };
+    for (let index = 0; index <= steps; index++) {
+      this.prevData.push({
+        axes: { x: Math.round(axes.x), y: Math.round(axes.y) },
+        imageData: this.getPixelsColor(
+          Math.round(axes.x),
+          Math.round(axes.y),
+          this.height
+        ),
+      });
+      this.ctx.fillRect(
+        Math.round(axes.x),
+        Math.round(axes.y),
+        this.height,
+        this.height
+      );
+      axes.x += axesInc.x;
+      axes.y += axesInc.y;
+    }
+  }
+
+  private resetPixels() {
+    this.prevData.forEach((data) => {
+      this.ctx.putImageData(data.imageData, data.axes.x, data.axes.y);
+    });
+    this.prevData = [];
+  }
+
+  private getPixelsColor(x: number, y: number, heigth: number) {
+    return this.ctx.getImageData(x, y, heigth, heigth);
+  }
 
   private drawCurve(drawData: Draw) {}
 
@@ -210,12 +269,22 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.event) {
       case 'mousedown':
         this.index++;
-        let pixelColor = this.getPixelColor(this.axes.x, this.axes.y);
+        let pixelColor = this.getPixelColor(this.axes.x, this.axes.y, 1)[0];
         this.ctx.fillStyle = this.color;
         this.boundaryFill(this.axes.x, this.axes.y, pixelColor, this.color);
         this.drawing = false;
         break;
     }
+  }
+
+  private floodFill(x: number, y: number, prevColor: string, newColor: string) {
+    const imgData = this.ctx.getImageData(
+      0,
+      0,
+      this.dimensions.width,
+      this.dimensions.height
+    );
+    const p32 = new Uint32Array(imgData.data.buffer);
   }
 
   private boundaryFill(
@@ -224,7 +293,17 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     prevColor: string,
     newColor: string
   ) {
-    let pixelColor = this.getPixelColor(x, y);
+    if (
+      !(
+        x >= 0 &&
+        y >= 0 &&
+        y <= this.dimensions.height &&
+        x <= this.dimensions.width
+      )
+    ) {
+      return;
+    }
+    let pixelColor = this.getPixelColor(x, y, 1)[0];
     if (pixelColor == prevColor) {
       this.ctx.fillRect(x, y, 1, 1);
       this.boundaryFill(x + 1, y, prevColor, newColor);
@@ -238,9 +317,16 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private getPixelColor(x: number, y: number) {
-    let pixel = this.ctx.getImageData(x, y, 1, 1).data;
-    return `#${this.rgbToHex(pixel[0], pixel[1], pixel[2])}`;
+  private getPixelColor(x: number, y: number, heigth: number) {
+    let pixels = this.ctx.getImageData(x, y, heigth, heigth).data;
+    let finalData = [];
+    for (let index = 0; index < pixels.length; index += 4) {
+      finalData.push(
+        `#${this.rgbToHex(pixels[index], pixels[index + 1], pixels[index + 2])}`
+      );
+    }
+
+    return finalData;
   }
 
   private rgbToHex(r: number, g: number, b: number) {
@@ -294,4 +380,37 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   private selectStroke(drawData: Draw) {}
 
   private startDrawing() {}
+
+  private dataHandler(redo?: boolean) {
+    if (redo) {
+      if(this.currentIndex < this.data.length-1){
+        this.ctx.putImageData(this.data[++this.currentIndex], 0, 0);
+      }
+    } else {
+      if (this.currentIndex < this.data.length-1) {
+        this.data.splice(
+          this.currentIndex + 1,
+          this.data.length - 1 - this.currentIndex
+        );
+      }
+      this.currentIndex++;
+      this.data.push(
+        this.ctx.getImageData(
+          0,
+          0,
+          this.dimensions.width,
+          this.dimensions.height
+        )
+      );
+      console.log(this.currentIndex);
+    }
+  }
+  private undo() {
+    if (this.currentIndex >= 0) {
+      if (this.currentIndex > 0) {
+        this.currentIndex--;
+      }
+      this.ctx.putImageData(this.data[this.currentIndex], 0, 0);
+    }
+  }
 }

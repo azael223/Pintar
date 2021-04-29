@@ -58,4 +58,20 @@ export class ToolsManagerService {
       this.ToolType.onChange.next(type);
     },
   };
+
+
+  public Redo = {
+    onChange: new Subject<boolean>(),
+    set: (changed:boolean) => {
+      this.Redo.onChange.next(changed);
+    },
+  };
+
+
+  public Undo = {
+    onChange: new Subject<boolean>(),
+    set: (changed:boolean) => {
+      this.Undo.onChange.next(changed);
+    },
+  };
 }

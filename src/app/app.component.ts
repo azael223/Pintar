@@ -1,4 +1,5 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
+import { ToolsManagerService } from './services/tools-manager.service';
 
 @Component({
   selector: 'app-root',
@@ -7,4 +8,13 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'Pintar';
+  constructor(private _tm: ToolsManagerService){}
+  @HostListener("document:keydown",["$event"]) onKeyDown(e:KeyboardEvent){
+    if(e.ctrlKey && e.key === "z"){
+      this._tm.Undo.set(true)
+    }
+    if(e.ctrlKey && e.key === "y"){
+      this._tm.Redo.set(true)
+    }
+  }
 }

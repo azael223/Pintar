@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import { ToolsManagerService } from 'src/app/services/tools-manager.service';
 export class ToolbarComponent implements OnInit {
   constructor(private _tm: ToolsManagerService) {}
 
-  public onDestroy = new Subject<any>();
+  public onDestroy = new Subject<any>()
 
   public colorControl = new FormControl({ value: '#000000', disabled: false });
   public color2Control = new FormControl({ value: '#ffffff', disabled: false });
@@ -47,5 +47,12 @@ export class ToolbarComponent implements OnInit {
       .subscribe((width) => {
         this._tm.Width.set(width);
       });
+  }
+
+  undo(){
+    this._tm.Undo.set(true)
+  }
+  redo(){
+    this._tm.Redo.set(true)
   }
 }
