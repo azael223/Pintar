@@ -6,15 +6,27 @@
   >
     <canvas #canvas class="canvas {{ cursor }}"></canvas>
     <textarea
-      #text
+      id="text"
       [formControl]="text"
-
       [style.left]="textAxes.x + 'px'"
-      [ngClass]="{ 'hidden': !(type === 'text' && drawing) }"
+      [style.font-family]="textStyle.family"
+      [style.font-size]="textStyle.height"
+      *ngIf="type === 'text' && drawing"
       [style.top]="textAxes.y + 'px'"
       class="custom"
       cols="20"
       rows="1"
     ></textarea>
+
+    <div
+    *ngIf="type==='select'"
+      id="select"
+      [style.left]="prevAxes.x + 'px'"
+      [style.width]="actualAxes.x - prevAxes.x + 'px'"
+      [style.height]="actualAxes.y - prevAxes.y + 'px'"
+      [style.top]="prevAxes.y + 'px'"
+      class="select-container"
+    ></div>
+
   </div>
 </div>

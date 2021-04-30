@@ -8,8 +8,9 @@ import {
   ViewChild,
 } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { element } from 'protractor';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { elementAt, takeUntil } from 'rxjs/operators';
 import { ToolType } from 'src/app/models/toolType';
 import { Draw, DrawService } from 'src/app/services/draw.service';
 import { HistorialService } from 'src/app/services/historial.service';
@@ -19,6 +20,17 @@ export interface Axes {
   x: number;
   y: number;
 }
+
+enum events {
+  'click',
+  'mousedown',
+  'mouseup',
+  'mouseout',
+  'mousemove',
+  'keydown',
+  'mouseleave',
+}
+
 @Component({
   selector: 'app-canvas',
   templateUrl: './canvas.component.html',
@@ -43,15 +55,19 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
   public ctx: CanvasRenderingContext2D;
   public drawing = false;
   public event: string;
-  public axes: Axes;
+  public axes: Axes = { x: 0, y: 0 };
   public textAxes: Axes = { x: 0, y: 0 };
   public prevAxes: Axes = { x: 0, y: 0 };
+  public actualAxes: Axes = { x: 0, y: 0 };
   public dimensions = { width: 720, height: 480 };
   public width = 10;
   public pixelColor = '#000000';
   public data: ImageData[] = [];
   public text = new FormControl('', []);
-
+  public textStyle = {
+    height: '16px',
+    family: 'Arial',
+  };
   public prevData: {
     axes: { x: number; y: number };
     imageData: ImageData;
@@ -90,6 +106,7 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     this.canvas.nativeElement.addEventListener('mouseup', (evt) => {
       this.event = 'mouseup';
       this.axes = { x: evt.clientX, y: evt.clientY };
+      console.log('paso');
       this.draw();
     });
     this.canvas.nativeElement.addEventListener('mousemove', (evt) => {
@@ -162,6 +179,10 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
       case 'text':
         this.drawText();
+        break;
+      case 'select':
+        this.drawSelect();
+        break;
     }
   }
 
@@ -195,24 +216,26 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
     switch (this.event) {
       case 'mousedown':
         this.index++;
-        this.textAxes = this.axes;
+        this.drawing = !this.drawing;
+        this.dataHandler();
         if (this.drawing) {
-          console.log(this.text.value);
-          this.dataHandler();
-          this.text.setValue('');
-          this.drawing = false;
+          setTimeout(() => {
+            this.textAxes = this.axes;
+            this.text.setValue('');
+            document.getElementById('text').focus();
+          }, 0);
         } else if (!this.drawing) {
-          this.drawing = true;
-          document.getElementById('text').focus();
-        }
-        break;
-      case 'mouseup':
-        break;
-      case 'keydown':
-        if (this.drawing) {
-          // this.ctx.font = '16px Arial';
-          // this.ctx.fillStyle = this.color;
-          // this.ctx.fillText("test /n", this.textAxes.x, this.textAxes.y);
+          setTimeout(() => {
+            if (this.text.value) {
+              this.ctx.fillStyle = this.color;
+              this.ctx.font = `${this.textStyle.height} ${this.textStyle.family}`;
+              this.ctx.fillText(
+                this.text.value,
+                this.textAxes.x,
+                this.textAxes.y
+              );
+            }
+          }, 0);
         }
         break;
       case 'mouseout':
@@ -392,6 +415,36 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         break;
       case 'mouseout':
         // this._historial.addTrazo(drawData.stroke);
+        break;
+    }
+  }
+
+  private drawSelect() {
+    switch (this.event) {
+      case 'mouseup':
+        this.drawing = false;
+        break;
+      case 'mousedown':
+        this.drawing = true;
+        this.prevAxes = this.axes;
+        this.axes = { x: 0, y: 0 };
+        setTimeout(() => {
+          document
+            .getElementById('select')
+            .addEventListener('mousemove', () => {
+              if (this.drawing) {
+                this.actualAxes = this.axes;
+              }
+            });
+          document.getElementById('select').addEventListener('mouseup', () => {
+            this.drawing = false;
+          });
+        }, 0);
+        break;
+      case 'mousemove':
+        if (this.drawing) {
+          this.actualAxes = this.axes;
+        }
         break;
     }
   }
