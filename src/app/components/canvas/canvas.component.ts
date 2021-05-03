@@ -431,9 +431,9 @@ export class CanvasComponent implements OnInit, AfterViewInit, OnDestroy {
         setTimeout(() => {
           document
             .getElementById('select')
-            .addEventListener('mousemove', () => {
+            .addEventListener('mousemove', (evt) => {
               if (this.drawing) {
-                this.actualAxes = this.axes;
+                this.actualAxes = { x: evt.offsetX, y: evt.offsetY };
               }
             });
           document.getElementById('select').addEventListener('mouseup', () => {
